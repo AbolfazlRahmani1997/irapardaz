@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\LinkStatus;
 use App\Models\Link;
 use App\Repositories\Interfaces\LinkRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
@@ -18,6 +19,7 @@ class LinkRepository implements LinkRepositoryInterface
         return Link::find($id);
     }
 
+
     public function create(array $data): Link
     {
         return Link::create($data);
@@ -33,7 +35,7 @@ class LinkRepository implements LinkRepositoryInterface
         return Link::destroy($id);
     }
 
-    public function findByShortenedUrl($shortenedUrl): Link
+    public function findByShortenedUrl($shortenedUrl): Link|null
     {
         return Link::where('shortened_url', $shortenedUrl)->first();
     }
@@ -53,11 +55,14 @@ class LinkRepository implements LinkRepositoryInterface
 
     public function getTopLinks(int $count):Collection
     {
-        return Link::orderBy('clicks', 'desc')->take($count)->get();
+        return Link::orderBy('clicks', 'desc')
+            ->where('status', '=', LinkStatus::ACTIVE->value)
+            ->take($count)
+            ->get();
     }
 
     public function search($query):Collection
     {
-        return Link::where('original_url', 'LIKE', '%' . $query . '%')->get();
+        return Link::where('original_url', 'LIKE', '%' . $query . '%')->where('status','=',LinkStatus::ACTIVE->value)->get();
     }
 }

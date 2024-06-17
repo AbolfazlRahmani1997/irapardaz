@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\LinkStatus;
+use App\Jobs\GenerateShortenedUrl;
 use App\Repositories\Interfaces\LinkRepositoryInterface;
 use App\Services\Interfaces\LinkServiceInterface;
 use Illuminate\Support\Facades\Redis;
@@ -17,15 +19,15 @@ class LinkService implements LinkServiceInterface
 
     public function createLink(int $userId, string $originalUrl): \App\Models\Link
     {
-        $shortenedUrl = $this->generateShortenedUrl();
-        $link = $this->linkRepository->create(data:[
+
+        $link = $this->linkRepository->create(data: [
             'user_id' => $userId,
             'original_url' => $originalUrl,
-            'shortened_url' => $shortenedUrl,
+            'status' => LinkStatus::CREATED->value,
             'clicks' => 0,
         ]);
+        dispatch(new GenerateShortenedUrl($link->id));
 
-        Redis::set("link:{$shortenedUrl}", json_encode($link));
         return $link;
     }
 
@@ -36,12 +38,28 @@ class LinkService implements LinkServiceInterface
 
     public function getUserLinks(int $userId): \Illuminate\Database\Eloquent\Collection
     {
-        return $this->linkRepository->getUserLinks(userId:$userId);
+        return $this->linkRepository->getUserLinks(userId: $userId);
     }
 
     public function searchLinks(string $query): \Illuminate\Database\Eloquent\Collection
     {
         return $this->linkRepository->search(query: $query);
+    }
+
+    public function generateShortenedUrlForLink(int $linkId)
+    {
+        $link = $this->linkRepository->find($linkId);
+        $this->linkRepository->update($link->id, ['status' => LinkStatus::PROCESS]);
+
+        do {
+            $shortenedUrl = $this->generateShortenedUrl();
+
+        } while ($this->linkRepository->findByShortenedUrl($shortenedUrl));
+        $this->linkRepository->update($link->id, [
+            'shortened_url' => $shortenedUrl,
+            'status' => LinkStatus::ACTIVE,
+        ]);
+        Redis::set("link:{$shortenedUrl}", json_encode($link));
     }
 
     public function redirectToOriginalUrl(string $shortenedUrl)

@@ -16,4 +16,6 @@ interface LinkServiceInterface
     public function searchLinks(string $query):Collection;
 
     public function redirectToOriginalUrl(string $shortenedUrl);
+
+    public function generateShortenedUrlForLink(int $linkId);
 }

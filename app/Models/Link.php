@@ -12,7 +12,8 @@ class Link extends Model
     protected $fillable=[
         'user_id',
         "original_url",
-        "shortened_url"
+        "shortened_url",
+        "status"
 
     ];
 }

@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Enums\LinkStatus;
 use App\Models\Link;
 use App\Models\User;
 use App\Repositories\LinkRepository;
@@ -38,11 +39,10 @@ class LinkRepositoryTest extends TestCase
 
     public function testGetTopLinks()
     {
-        Link::factory()->create(['clicks' => 10]);
-        Link::factory()->create(['clicks' => 8]);
+        Link::factory()->create(['clicks' => 10,'status'=>LinkStatus::ACTIVE->value]);
+        Link::factory()->create(['clicks' => 8,'status'=>LinkStatus::ACTIVE->value]);
 
         $topLinks = $this->linkRepository->getTopLinks(1);
-
         $this->assertCount(1, $topLinks);
         $this->assertEquals(10, $topLinks[0]->clicks);
     }

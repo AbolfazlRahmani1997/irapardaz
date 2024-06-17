@@ -17,7 +17,7 @@ interface LinkRepositoryInterface
 
     public function delete(int $id):bool;
 
-    public function findByShortenedUrl(string $shortenedUrl):Link;
+    public function findByShortenedUrl(string $shortenedUrl):Link|null;
 
     public function getUserLinks(int $userId):Collection;
 
